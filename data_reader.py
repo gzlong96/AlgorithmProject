@@ -3,9 +3,10 @@ import numpy as np
 import copy
 import time
 
-inerval = 20 # the interval of the time sequence
-fft_n = 20 # number of fft coefficients
-dis_rate = 40 # rate of area division
+inerval = 30 # the interval of the time sequence
+fft_n = 8 # number of fft coefficients
+dis_rate = 20 # rate of area division
+maxlens = [7984,16713,6900,15780,6238,13629,7985,7274,8908,8043,7940,7810,7963,8058,7441]
 
 def read_one_file(filename):
     one_data = open(filename,'r')
@@ -63,20 +64,23 @@ def read_one_video(pos_list, neg_list):
     data_label = []
     for filename in pos_list:
         datax, datay = read_one_file(filename)
-        datax = np.fft.fft(datax, fft_n) # if you don't need fft, just comment these lines
-        datay = np.fft.fft(datay, fft_n)
-        data_seq.append(np.concatenate((datax, datay)))
+        datax = np.fft.rfft(datax)[:fft_n] # if you don't need fft, just comment these lines
+        datay = np.fft.rfft(datay)[:fft_n]
+        real_datax = np.concatenate((np.real(datax), np.imag(datax)))
+        real_datay = np.concatenate((np.real(datay), np.imag(datay)))
+        data_seq.append(np.concatenate((real_datax, real_datay)))
         data_label.append(1)
     for filename in neg_list:
         datax, datay = read_one_file(filename)
-        datax = np.fft.fft(datax, fft_n)
-        datay = np.fft.fft(datay, fft_n)
-        data_seq.append(np.concatenate((datax, datay)))
+        datax = np.fft.rfft(datax)[:fft_n]
+        datay = np.fft.rfft(datay)[:fft_n]
+        real_datax = np.concatenate((np.real(datax), np.imag(datax)))
+        real_datay = np.concatenate((np.real(datay), np.imag(datay)))
+        data_seq.append(np.concatenate((real_datax, real_datay)))
         data_label.append(0)
     # print data_seq
-    # TODO deal with complex number (in fact it's runable now...)
 
-    return np.array(data_seq), np.array(data_label)
+    return np.array(data_seq)/1000, np.array(data_label)
 
 def read_all():
     # read all data into [vidoe_num, one_file, data/label]
