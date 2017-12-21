@@ -1,9 +1,18 @@
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.optimizers import Adam
+import keras.callbacks
 import numpy as np
 import data_reader
 import random
+
+class AccHistory(keras.callbacks.Callback):
+    def on_train_begin(self, logs={}):
+        self.accs = []
+
+    def on_batch_end(self, batch, logs={}):
+        self.accs.append(logs.get('acc'))
+
 
 np.random.seed(1234567)
 
@@ -21,10 +30,14 @@ adam = Adam(lr=0.01)
 model.compile(loss='binary_crossentropy',
               optimizer=adam,
               metrics=['accuracy'])
+history = AccHistory()
+
+# file_history = open('history', 'w')
 
 all_seq, all_label = data_reader.read_all()
 y = all_label[0]
 x = all_seq[0]
+
 
 acc_history=[]
 
@@ -51,12 +64,16 @@ for i in range(10): #10 rounds
     x_train = np.array(x_train)
     y_train = np.array(y_train)
     print x_train.shape
-    model.fit(x_train, y_train, epochs=250, batch_size=16,shuffle=True)
+    model.fit(x_train, y_train, epochs=250, batch_size=16,shuffle=True, verbose=0, callbacks=[history])
     score = model.evaluate(x_test, y_test, batch_size=5)
     acc_history.append(score[1])
+    # file_history.write(str(history.accs)+'\n')
     print "test "+str(i+1)+str(score)
 
 score = model.evaluate(x, y, batch_size=36)
 print "final test " + str(score)
 print sum(acc_history)/10
+if sum(acc_history)/10 > 0.87:
+    model.save('90%model.h5')
+# file_history.close()
 # model.save("/root/merge_model")
